@@ -4,7 +4,7 @@ Menubar.File = function ( signals ) {
 	container.setClass( 'menu' );
 	container.onMouseOver( function () { options.setDisplay( 'block' ) } );
 	container.onMouseOut( function () { options.setDisplay( 'none' ) } );
-	container.onClick( function () { options.setDisplay( 'block' ) } );
+	container.onClick( function () { options.setDisplay( 'none' ) } );
 
 	var title = new UI.Panel();
 	title.setTextContent( 'File' ).setColor( '#666' );
@@ -47,11 +47,40 @@ Menubar.File = function ( signals ) {
 
 			}
 
-			location.reload();
+			location.replace( location.origin + location.pathname );
 
 		}
 
 	} );
+	options.add( option );
+
+	// SceneDrive
+
+	var option = new UI.Panel();
+	option.setClass( 'option' );
+	option.setId( 'sceneDriveAuthorize' );
+	option.setTextContent( 'Authorize' );
+	options.add( option );
+
+	var option = new UI.Panel();
+	option.setClass( 'option' );
+	option.setId( 'sceneDriveSave' );
+	option.setTextContent( 'Save' );
+	option.dom.style.display = 'none';
+	options.add( option );
+
+	var option = new UI.Panel();
+	option.setClass( 'option' );
+	option.setId( 'sceneDriveOpen' );
+	option.setTextContent( 'Open' );
+	option.dom.style.display = 'none';
+	options.add( option );
+
+	var option = new UI.Panel();
+	option.setClass( 'option' );
+	option.setId( 'sceneDriveShare' );
+	option.setTextContent( 'Share' );
+	option.dom.style.display = 'none';
 	options.add( option );
 
 	// export geometry
@@ -182,7 +211,7 @@ Menubar.File = function ( signals ) {
 
 	// signals
 
-	signals.objectSelected.add( function ( object ) {
+	signals.selectObject.add( function ( object ) {
 
 		selectedObject = object;
 

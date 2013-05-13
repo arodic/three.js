@@ -12,6 +12,14 @@ UI.Element.prototype = {
 
 	},
 
+	setId: function ( name ) {
+
+		this.dom.id = name;
+
+		return this;
+
+	},
+
 	setStyle: function ( style, array ) {
 
 		for ( var i = 0; i < array.length; i ++ ) {
@@ -84,6 +92,7 @@ UI.Panel = function () {
 	this.dom = dom;
 
 	return this;
+
 };
 
 UI.Panel.prototype = Object.create( UI.Element.prototype );
@@ -100,7 +109,6 @@ UI.Panel.prototype.add = function () {
 
 };
 
-
 UI.Panel.prototype.remove = function () {
 
 	for ( var i = 0; i < arguments.length; i ++ ) {
@@ -108,6 +116,73 @@ UI.Panel.prototype.remove = function () {
 		this.dom.removeChild( arguments[ i ].dom );
 
 	}
+
+	return this;
+
+};
+
+// Tabbed Panel
+
+UI.TabbedPanel = function () {
+
+	UI.Panel.call( this );
+
+	var header = new UI.Panel();
+	header.setBorderBottom( '1px solid #ccc' );
+
+	this.dom.appendChild( header.dom );
+	
+	this.header = header.dom;
+
+	this.tabs = [];
+	this.contents = [];
+
+	return this;
+
+};
+
+UI.TabbedPanel.prototype = Object.create( UI.Panel.prototype );
+
+UI.TabbedPanel.prototype.add = function () {
+
+	for ( var i = 0; i < arguments.length; i ++ ) {
+
+		var tab = new UI.Text( arguments[ i ].name ).setColor( '#666' );
+		tab.setPadding( '5px 10px' );
+		tab.setBorder( '1px solid #ccc' );
+		tab.setMargin( '0 0 -1px 5px' );
+		this.header.appendChild( tab.dom );
+
+		var content = arguments[ i ];
+		this.dom.appendChild( content.dom );
+		content.setDisplay( 'none' );
+
+		this.tabs.push(tab);
+		this.contents.push(content);
+
+		var scope = this;
+
+		tab.onClick( function() {
+
+			for (var j in scope.contents ){
+				scope.contents[j].setDisplay( 'none' );
+				scope.tabs[j].setBorderBottom( '1px solid #ccc' );
+			}
+			content.setDisplay( ' block ');
+			tab.setBorderBottom( '1px solid #eee' );
+
+		} );
+
+	}
+
+	this.contents[0].setDisplay( 'block' );
+	this.tabs[0].setBorderBottom( '1px solid #eee' );
+
+	return this;
+
+};
+
+UI.TabbedPanel.prototype.remove = function () {
 
 	return this;
 
@@ -353,7 +428,7 @@ UI.FancySelect.prototype.setOptions = function ( options ) {
 
 			for ( var i = 0; i < scope.options.length; i ++ ) {
 
-				scope.options[ i ].style.backgroundColor = '#f0f0f0';
+				scope.options[ i ].style.backgroundColor = '#ffffff';
 
 			}
 

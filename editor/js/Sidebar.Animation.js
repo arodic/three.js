@@ -36,7 +36,7 @@ Sidebar.Animation = function ( signals ) {
 	}
 	
 	
-	signals.objectAdded.add( function ( object ) {
+	signals.addObject.add( function ( object ) {
 
 		console.log(object)
 		if (object instanceof THREE.Mesh){

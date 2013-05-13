@@ -1,5 +1,11 @@
 Sidebar.Object3D = function ( signals ) {
 
+	var selected = null;
+
+	var scene = null;
+
+	//
+
 	var container = new UI.Panel();
 	container.setBorderTop( '1px solid #ccc' );
 	container.setPadding( '10px' );
@@ -8,16 +14,6 @@ Sidebar.Object3D = function ( signals ) {
 	var objectType = new UI.Text().setColor( '#666' ).setTextTransform( 'uppercase' );
 	container.add( objectType );
 	container.add( new UI.Break(), new UI.Break() );
-
-	// parent
-
-	var objectParentRow = new UI.Panel();
-	var objectParent = new UI.Select().setWidth( '150px' ).setColor( '#444' ).setFontSize( '12px' ).onChange( update );
-
-	objectParentRow.add( new UI.Text( 'Parent' ).setWidth( '90px' ).setColor( '#666' ) );
-	objectParentRow.add( objectParent );
-
-	container.add( objectParentRow );
 
 	// name
 
@@ -28,6 +24,40 @@ Sidebar.Object3D = function ( signals ) {
 	objectNameRow.add( objectName );
 
 	container.add( objectNameRow );
+
+	// parent
+
+	var objectParentRow = new UI.Panel();
+	var objectParent = new UI.Select().setWidth( '150px' ).setColor( '#444' ).setFontSize( '12px' ).onChange( update );
+	var parentLabel = new UI.Text( 'Parent' ).setWidth( '90px' ).setColor( '#0080f0' );
+	parentLabel.onClick( function(){  signals.selectObject.dispatch( EDITOR.objects[ objectParent.getValue() ] ) } );
+	objectParentRow.add( parentLabel );
+	objectParentRow.add( objectParent );
+
+	container.add( objectParentRow );
+
+	// geometry
+
+	var objectGeometryRow = new UI.Panel();
+	var objectGeometry = new UI.Select().setWidth( '150px' ).setColor( '#444' ).setFontSize( '12px' ).onChange( update );
+	var geometryLabel = new UI.Text( 'Geometry' ).setWidth( '90px' ).setColor( '#0080f0' );
+	geometryLabel.onClick( function(){  signals.selectGeometry.dispatch( EDITOR.geometries[ objectGeometry.getValue() ] ) } );
+	objectGeometryRow.add( geometryLabel );
+	objectGeometryRow.add( objectGeometry );
+
+	container.add( objectGeometryRow );
+
+	// material
+
+	var objectMaterialRow = new UI.Panel();
+	var objectMaterial = new UI.Select().setWidth( '150px' ).setColor( '#444' ).setFontSize( '12px' ).onChange( update );
+	var materialLabel = new UI.Text( 'Material' ).setWidth( '90px' ).setColor( '#0080f0' );
+	materialLabel.onClick( function(){  signals.selectMaterial.dispatch( EDITOR.materials[ objectMaterial.getValue() ] ) } );
+	objectMaterialRow.add( materialLabel );
+
+	objectMaterialRow.add( objectMaterial );
+
+	container.add( objectMaterialRow );
 
 	// position
 
@@ -196,10 +226,6 @@ Sidebar.Object3D = function ( signals ) {
 
 	//
 
-	var selected = null;
-
-	var scene = null;
-
 	function updateScaleX() {
 
 		if ( objectScaleLock.getValue() === true ) {
@@ -253,11 +279,11 @@ Sidebar.Object3D = function ( signals ) {
 
 			if ( selected.parent !== undefined ) {
 
-				var newParentId = parseInt( objectParent.getValue() );
+				var newParentUuid = objectParent.getValue();
 
-				if ( selected.parent.id !== newParentId && selected.id !== newParentId ) {
+				if ( selected.parent.uuid !== newParentUuid && selected.uuid !== newParentUuid ) {
 
-					var parent = scene.getObjectById( newParentId, true );
+					var parent = EDITOR.objects[newParentUuid];
 
 					if ( parent === undefined ) {
 
@@ -268,6 +294,37 @@ Sidebar.Object3D = function ( signals ) {
 					parent.add( selected );
 
 					signals.sceneChanged.dispatch( scene );
+
+				}
+
+			}
+
+
+			if ( selected.geometry !== undefined ) {
+
+				var newGeometryUUid = objectGeometry.getValue();
+
+				if ( selected.geometry.uuid !== newGeometryUUid && selected.uuid !== newGeometryUUid ) {
+
+					selected.geometry = EDITOR.geometries[newGeometryUUid];
+
+					// TODO: Update Geometry;
+
+					signals.objectChanged.dispatch( selected );
+
+				}
+
+			}
+
+			if ( selected.material !== undefined ) {
+
+				var newMaterialUUid = objectMaterial.getValue();
+
+				if ( selected.material.uuid !== newMaterialUUid && selected.uuid !== newMaterialUUid ) {
+
+					selected.material = EDITOR.materials[newMaterialUUid];
+
+					signals.objectChanged.dispatch( selected );
 
 				}
 
@@ -362,6 +419,8 @@ Sidebar.Object3D = function ( signals ) {
 
 		var properties = {
 			'parent': objectParentRow,
+			'geometry': objectGeometryRow,
+			'material': objectMaterialRow,
 			'fov': objectFovRow,
 			'near': objectNearRow,
 			'far': objectFarRow,
@@ -427,34 +486,41 @@ Sidebar.Object3D = function ( signals ) {
 
 		scene = object;
 
-		var options = {};
+		var allObjects = {};
+		var allGeometries = {};
+		var allMaterials = {};
 
-		options[ scene.id ] = 'Scene';
+		for ( var uuid in EDITOR.objects ) {
 
-		( function addObjects( objects ) {
+			allObjects[ uuid ] = EDITOR.objects[ uuid ].name;
 
-			for ( var i = 0, l = objects.length; i < l; i ++ ) {
+		}
 
-				var object = objects[ i ];
+		for ( var uuid in EDITOR.geometries ) {
 
-				options[ object.id ] = object.name;
+			allGeometries[ uuid ] = EDITOR.geometries[ uuid ].name;
 
-				addObjects( object.children );
+		}
 
-			}
+		for ( var uuid in EDITOR.materials ) {
 
-		} )( object.children );
+			allMaterials[ uuid ] = EDITOR.materials[ uuid ].name;
 
-		objectParent.setOptions( options );
+		}
+
+		objectParent.setOptions( allObjects );
+		objectGeometry.setOptions( allGeometries );
+		objectMaterial.setOptions( allMaterials );
 
 	} );
 
-	signals.objectSelected.add( function ( object ) {
-
+	signals.selectObject.add( function ( object ) {
+			
 		selected = object;
 		updateUI();
 
 	} );
+
 	signals.objectChanged.add( function ( object ) {
 
 		if ( selected === object ) updateUI();
@@ -462,6 +528,16 @@ Sidebar.Object3D = function ( signals ) {
 	} );
 
 	function updateUI() {
+
+		if ( !selected ) {
+
+			container.setDisplay( 'none' );
+			return;
+
+		}
+
+		signals.selectMaterial.dispatch( null );
+		signals.selectGeometry.dispatch( null );
 
 		container.setDisplay( 'block' );
 
@@ -471,7 +547,19 @@ Sidebar.Object3D = function ( signals ) {
 
 		if ( object.parent !== undefined ) {
 
-			objectParent.setValue( object.parent.id );
+			objectParent.setValue( object.parent.uuid );
+
+		}
+
+		if ( object.geometry !== undefined ) {
+
+			objectGeometry.setValue( object.geometry.uuid );
+
+		}
+
+		if ( object.material !== undefined ) {
+
+			objectMaterial.setValue( object.material.uuid );
 
 		}
 

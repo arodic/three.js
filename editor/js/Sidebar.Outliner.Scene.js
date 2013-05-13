@@ -1,15 +1,12 @@
-Sidebar.Scene = function ( signals ) {
+Sidebar.Outliner.Scene = function ( signals ) {
 
 	var selected = null;
 
 	var container = new UI.Panel();
+	container.name = "SCENE";
 	container.setPadding( '10px' );
-	container.setBorderTop( '1px solid #ccc' );
 
-	container.add( new UI.Text( 'SCENE' ).setColor( '#666' ) );
-	container.add( new UI.Break(), new UI.Break() );
-
-	var outliner = new UI.FancySelect().setWidth( '100%' ).setHeight('140px').setColor( '#444' ).setFontSize( '12px' ).onChange( updateOutliner );
+	var outliner = new UI.FancySelect().setWidth( '100%' ).setHeight('278px').setColor( '#444' ).setFontSize( '12px' ).onChange( updateOutliner );
 	container.add( outliner );
 	container.add( new UI.Break() );
 
@@ -107,18 +104,9 @@ Sidebar.Scene = function ( signals ) {
 
 	function updateOutliner() {
 
-		var id = parseInt( outliner.getValue() );
+		var uuid = outliner.getValue();
 
-		scene.traverse( function ( node ) {
-
-			if ( node.id === id ) {
-
-				signals.objectSelected.dispatch( node );
-				return;
-
-			}
-
-		} );
+		signals.selectObject.dispatch( EDITOR.objects[ uuid ] );
 
 	}
 
@@ -162,7 +150,7 @@ Sidebar.Scene = function ( signals ) {
 
 		var options = {};
 
-		options[ scene.id ] = scene.name + ' <span style="color: #aaa">- ' + getObjectType( scene ) + '</span>';
+		options[ scene.uuid ] = scene.name + ' <span style="color: #aaa">- ' + getObjectType( scene ) + '</span>';
 
 		( function addObjects( objects, pad ) {
 
@@ -170,7 +158,7 @@ Sidebar.Scene = function ( signals ) {
 
 				var object = objects[ i ];
 
-				options[ object.id ] = pad + object.name + ' <span style="color: #aaa">- ' + getObjectType( object ) + '</span>';
+				options[ object.uuid ] = pad + object.name + ' <span style="color: #aaa">- ' + getObjectType( object ) + '</span>';
 
 				addObjects( object.children, pad + '&nbsp;&nbsp;&nbsp;' );
 
@@ -207,9 +195,9 @@ Sidebar.Scene = function ( signals ) {
 
 	} );
 
-	signals.objectSelected.add( function ( object ) {
+	signals.selectObject.add( function ( object ) {
 
-		outliner.setValue( object !== null ? object.id : null );
+		outliner.setValue( object ? object.uuid : null );
 
 	} );
 

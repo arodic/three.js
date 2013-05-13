@@ -4,7 +4,7 @@ Menubar.Add = function ( signals ) {
 	container.setClass( 'menu' );
 	container.onMouseOver( function () { options.setDisplay( 'block' ) } );
 	container.onMouseOut( function () { options.setDisplay( 'none' ) } );
-	container.onClick( function () { options.setDisplay( 'block' ) } );
+	container.onClick( function () { options.setDisplay( 'none' ) } );
 
 	var title = new UI.Panel();
 	title.setTextContent( 'Add' ).setColor( '#666' );
@@ -33,12 +33,14 @@ Menubar.Add = function ( signals ) {
 		var heightSegments = 1;
 
 		var geometry = new THREE.PlaneGeometry( width, height, widthSegments, heightSegments );
-		var mesh = new THREE.Mesh( geometry, createDummyMaterial( geometry ) );
+		var mesh = new THREE.Mesh( geometry, defaultMaterial );
 		mesh.name = 'Plane ' + mesh.id;
+		geometry.name = 'Plane ' + mesh.id + ' geometry';
 
 		mesh.rotation.x = - Math.PI/2;
 
-		signals.objectAdded.dispatch( mesh );
+		signals.addObject.dispatch( mesh );
+		signals.selectObject.dispatch( mesh );
 
 	} );
 	options.add( option );
@@ -59,10 +61,12 @@ Menubar.Add = function ( signals ) {
 		var depthSegments = 1;
 
 		var geometry = new THREE.CubeGeometry( width, height, depth, widthSegments, heightSegments, depthSegments );
-		var mesh = new THREE.Mesh( geometry, createDummyMaterial( geometry ) );
+		var mesh = new THREE.Mesh( geometry, defaultMaterial );
 		mesh.name = 'Cube ' + mesh.id;
+		geometry.name = 'Cube ' + mesh.id + ' geometry';
 
-		signals.objectAdded.dispatch( mesh );
+		signals.addObject.dispatch( mesh );
+		signals.selectObject.dispatch( mesh );
 
 
 	} );
@@ -83,10 +87,12 @@ Menubar.Add = function ( signals ) {
 		var openEnded = false;
 
 		var geometry = new THREE.CylinderGeometry( radiusTop, radiusBottom, height, radiusSegments, heightSegments, openEnded );
-		var mesh = new THREE.Mesh( geometry, createDummyMaterial( geometry ) );
+		var mesh = new THREE.Mesh( geometry, defaultMaterial );
 		mesh.name = 'Cylinder ' + mesh.id;
+		geometry.name = 'Cylinder ' + mesh.id + ' geometry';
 
-		signals.objectAdded.dispatch( mesh );
+		signals.addObject.dispatch( mesh );
+		signals.selectObject.dispatch( mesh );
 
 	} );
 	options.add( option );
@@ -103,10 +109,12 @@ Menubar.Add = function ( signals ) {
 		var heightSegments = 16;
 
 		var geometry = new THREE.SphereGeometry( radius, widthSegments, heightSegments );
-		var mesh = new THREE.Mesh( geometry, createDummyMaterial( geometry ) );
+		var mesh = new THREE.Mesh( geometry, defaultMaterial );
 		mesh.name = 'Sphere ' + mesh.id;
+		geometry.name = 'Sphere ' + mesh.id + ' geometry';
 
-		signals.objectAdded.dispatch( mesh );
+		signals.addObject.dispatch( mesh );
+		signals.selectObject.dispatch( mesh );
 
 	} );
 	options.add( option );
@@ -122,10 +130,12 @@ Menubar.Add = function ( signals ) {
 		var detail = 2;
 
 		var geometry = new THREE.IcosahedronGeometry ( radius, detail );
-		var mesh = new THREE.Mesh( geometry, createDummyMaterial( geometry ) );
+		var mesh = new THREE.Mesh( geometry, defaultMaterial );
 		mesh.name = 'Icosahedron ' + mesh.id;
+		geometry.name = 'Icosaheadron ' + mesh.id + ' geometry';
 
-		signals.objectAdded.dispatch( mesh );
+		signals.addObject.dispatch( mesh );
+		signals.selectObject.dispatch( mesh );
 
 	} );
 	options.add( option );
@@ -144,10 +154,12 @@ Menubar.Add = function ( signals ) {
 		var arc = Math.PI * 2;
 
 		var geometry = new THREE.TorusGeometry( radius, tube, radialSegments, tubularSegments, arc );
-		var mesh = new THREE.Mesh( geometry, createDummyMaterial( geometry ) );
+		var mesh = new THREE.Mesh( geometry, defaultMaterial );
 		mesh.name = 'Torus ' + mesh.id;
+		geometry.name = 'Torus ' + mesh.id + ' geometry';
 
-		signals.objectAdded.dispatch( mesh );
+		signals.addObject.dispatch( mesh );
+		signals.selectObject.dispatch( mesh );
 
 	} );
 	options.add( option );
@@ -168,10 +180,12 @@ Menubar.Add = function ( signals ) {
 		var heightScale = 1;
 
 		var geometry = new THREE.TorusKnotGeometry( radius, tube, radialSegments, tubularSegments, p, q, heightScale );
-		var mesh = new THREE.Mesh( geometry, createDummyMaterial( geometry ) );
+		var mesh = new THREE.Mesh( geometry, defaultMaterial );
 		mesh.name = 'TorusKnot ' + mesh.id;
+		geometry.name = 'TorusKnot ' + mesh.id + ' geometry';
 
-		signals.objectAdded.dispatch( mesh );
+		signals.addObject.dispatch( mesh );
+		signals.selectObject.dispatch( mesh );
 
 	} );
 	options.add( option );
@@ -194,7 +208,8 @@ Menubar.Add = function ( signals ) {
 		var light = new THREE.PointLight( color, intensity, distance );
 		light.name = 'PointLight ' + light.id;
 
-		signals.objectAdded.dispatch( light );
+		signals.addObject.dispatch( light );
+		signals.selectObject.dispatch( light );
 
 	} );
 	options.add( option );
@@ -218,7 +233,8 @@ Menubar.Add = function ( signals ) {
 
 		light.position.set( 0, 1, 0 ).multiplyScalar( 200 );
 
-		signals.objectAdded.dispatch( light );
+		signals.addObject.dispatch( light );
+		signals.selectObject.dispatch( light );
 
 	} );
 	options.add( option );
@@ -239,7 +255,8 @@ Menubar.Add = function ( signals ) {
 
 		light.position.set( 1, 1, 1 ).multiplyScalar( 200 );
 
-		signals.objectAdded.dispatch( light );
+		signals.addObject.dispatch( light );
+		signals.selectObject.dispatch( light );
 
 	} );
 	options.add( option );
@@ -260,7 +277,8 @@ Menubar.Add = function ( signals ) {
 
 		light.position.set( 1, 1, 1 ).multiplyScalar( 200 );
 
-		signals.objectAdded.dispatch( light );
+		signals.addObject.dispatch( light );
+		signals.selectObject.dispatch( light );
 
 	} );
 	options.add( option );
@@ -277,18 +295,34 @@ Menubar.Add = function ( signals ) {
 		var light = new THREE.AmbientLight( color );
 		light.name = 'AmbientLight ' + light.id;
 
-		signals.objectAdded.dispatch( light );
+		signals.addObject.dispatch( light );
+		signals.selectObject.dispatch( light );
 
 	} );
 	options.add( option );
 
 	//
 
-	function createDummyMaterial() {
+	options.add( new UI.HorizontalRule() );
 
-		return new THREE.MeshPhongMaterial();
+	// add material
 
-	};
+	var option = new UI.Panel();
+	option.setClass( 'option' );
+	option.setTextContent( 'Material' );
+	option.onClick( function () {
+
+		var material = new THREE.MeshPhongMaterial();
+		material.name = 'Material ' + material.id;
+
+		signals.addMaterial.dispatch( material );
+
+	} );
+	options.add( option );
+
+	var defaultMaterial = new THREE.MeshPhongMaterial();
+	defaultMaterial.uuid = uuid();
+	defaultMaterial.name = 'Default Material';
 
 	return container;
 

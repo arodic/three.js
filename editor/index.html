@@ -70,13 +70,19 @@
 				overflow: auto;
 			}
 
-				.sidebar .Panel {
+				.sidebar .Text {
 					margin-bottom: 10px;
 				}
 
 		</style>
 	</head>
 	<body>
+
+		<!-- sceneDive -->
+
+    <script type="text/javascript" src="//www.google.com/jsapi"></script>
+    <script type="text/javascript" src="//apis.google.com/js/api.js"></script>
+    <script type="text/javascript" src="//apis.google.com/js/client.js"></script>
 
 		<script src="../build/three.js"></script>
 		<script src="../examples/js/libs/system.min.js"></script>
@@ -110,6 +116,11 @@
 		<script src="js/libs/signals.min.js"></script>
 		<script src="js/libs/ui.js"></script>
 		<script src="js/libs/ui.three.js"></script>
+		<script src="js/libs/uuid.js"></script>
+
+		<script src="js/libs/rtclient.js"></script>
+		<script src="js/drive/SceneDriveUtils.js"></script>
+		<script src="js/drive/SceneDrive.js"></script>
 
 		<script src="js/Loader.js"></script>
 		<script src="js/Menubar.js"></script>
@@ -117,9 +128,17 @@
 		<script src="js/Menubar.Edit.js"></script>
 		<script src="js/Menubar.Add.js"></script>
 		<script src="js/Menubar.Help.js"></script>
+
 		<script src="js/Sidebar.js"></script>
 		<script src="js/Sidebar.Renderer.js"></script>
-		<script src="js/Sidebar.Scene.js"></script>
+
+		<script src="js/Sidebar.Outliner.js"></script>
+		<script src="js/Sidebar.Outliner.Scene.js"></script>
+		<script src="js/Sidebar.Outliner.Geometries.js"></script>
+		<script src="js/Sidebar.Outliner.Materials.js"></script>
+		<script src="js/Sidebar.Outliner.Textures.js"></script>
+
+		<script src="js/Sidebar.Selected.js"></script>
 		<script src="js/Sidebar.Object3D.js"></script>
 		<script src="js/Sidebar.Geometry.js"></script>
 		<script src="js/Sidebar.Animation.js"></script>
@@ -131,6 +150,7 @@
 		<script src="js/Sidebar.Geometry.TorusGeometry.js"></script>
 		<script src="js/Sidebar.Geometry.TorusKnotGeometry.js"></script>
 		<script src="js/Sidebar.Material.js"></script>
+
 		<script src="js/Toolbar.js"></script>
 		<script src="js/Viewport.js"></script>
 
@@ -139,25 +159,34 @@
 			window.URL = window.URL || window.webkitURL;
 			window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
 
+			var EDITOR = {}; // Global namespace
+
 			var SIGNALS = signals;
 
 			var signals = {
 
 				// actions
-
-				cloneSelectedObject: new SIGNALS.Signal(),
-				removeSelectedObject: new SIGNALS.Signal(),
+				
+				addScene: new SIGNALS.Signal(),
+				addObject: new SIGNALS.Signal(),
+				addMaterial: new SIGNALS.Signal(),
+				addGeometry: new SIGNALS.Signal(),
+				cloneObject: new SIGNALS.Signal(),
+				removeObject: new SIGNALS.Signal(),
+				selectObject: new SIGNALS.Signal(),
+				selectGeometry: new SIGNALS.Signal(),
+				selectMaterial: new SIGNALS.Signal(),
+				setRenderer: new SIGNALS.Signal(),
+				undo: new SIGNALS.Signal(),
+				redo: new SIGNALS.Signal(),
 				playAnimations: new SIGNALS.Signal(),
 
 				// notifications
 
 				transformModeChanged: new SIGNALS.Signal(),
 				snapChanged: new SIGNALS.Signal(),
-				rendererChanged: new SIGNALS.Signal(),
-				sceneAdded: new SIGNALS.Signal(),
 				sceneChanged: new SIGNALS.Signal(),
-				objectAdded: new SIGNALS.Signal(),
-				objectSelected: new SIGNALS.Signal(),
+				objectRemoved: new SIGNALS.Signal(),
 				objectChanged: new SIGNALS.Signal(),
 				materialChanged: new SIGNALS.Signal(),
 				clearColorChanged: new SIGNALS.Signal(),
@@ -178,6 +207,7 @@
 			viewport.setRight( '300px' );
 			viewport.setBottom( '32px' );
 			document.body.appendChild( viewport.dom );
+			EDITOR.scene = viewport.scene;
 
 			var toolbar = new Toolbar( signals );
 			toolbar.setBottom( '0px' );
@@ -197,6 +227,8 @@
 			sidebar.setBottom( '0px' );
 			document.body.appendChild( sidebar.dom );
 
+			var sceneDrive = new SceneDrive( viewport.scene );
+
 			//
 
 			document.addEventListener( 'keydown', function ( event ) {
@@ -204,8 +236,10 @@
 				switch ( event.keyCode ) {
 
 					case 46: // delete
+					case 8: // backspace
 
-						signals.removeSelectedObject.dispatch();
+						event.preventDefault();
+						signals.removeObject.dispatch();
 
 						break;
 
@@ -221,9 +255,23 @@
 
 			window.addEventListener( 'resize', onWindowResize, false );
 
-			onWindowResize();
+			
 
-			loader.loadLocalStorage();
+			document.addEventListener( "DOMContentLoaded", function(){
+    		
+    		onWindowResize();
+    		sceneDrive.init();
+
+				if ( !rtclient.params['fileId'] ) {
+
+					loader.loadLocalStorage();
+
+				}
+
+    	}, false );
+
+
+			
 
 		</script>
 	</body>

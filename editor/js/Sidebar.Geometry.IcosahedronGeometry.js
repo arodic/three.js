@@ -1,10 +1,8 @@
-Sidebar.Geometry.IcosahedronGeometry = function ( signals, object ) {
+Sidebar.Geometry.IcosahedronGeometry = function ( signals, geometry ) {
 
 	var container = new UI.Panel();
 	container.setBorderTop( '1px solid #ccc' );
 	container.setPaddingTop( '10px' );
-
-	var geometry = object.geometry;
 
 	// radius
 
@@ -31,18 +29,35 @@ Sidebar.Geometry.IcosahedronGeometry = function ( signals, object ) {
 
 	function update() {
 
-		delete object.__webglInit; // TODO: Remove hack (WebGLRenderer refactoring)
+		var uuid = geometry.uuid;
+		var name = geometry.name;
+		var object;
 
-		object.geometry.dispose();
-
-		object.geometry = new THREE.IcosahedronGeometry(
+		EDITOR.geometries[uuid] = new THREE.IcosahedronGeometry(
 			radius.getValue(),
 			detail.getValue()
 		);
 
-		object.geometry.computeBoundingSphere();
+		EDITOR.geometries[uuid].computeBoundingSphere();
+		EDITOR.geometries[uuid].uuid = uuid;
+		EDITOR.geometries[uuid].name = name;
 
-		signals.objectChanged.dispatch( object );
+		for ( var i in EDITOR.objects ) {
+
+			object = EDITOR.objects[i];
+
+			if ( object.geometry && object.geometry.uuid == uuid ) {
+
+				delete object.__webglInit; // TODO: Remove hack (WebGLRenderer refactoring)
+				object.geometry.dispose();
+
+				object.geometry = EDITOR.geometries[uuid];
+
+				signals.objectChanged.dispatch( object );
+
+			}
+
+		}
 
 	}
 

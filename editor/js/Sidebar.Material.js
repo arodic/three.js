@@ -218,22 +218,25 @@ Sidebar.Material = function ( signals ) {
 
 	//
 
-	var selected = null;
+	var selectedMaterial = null;
+	// var selected = null;
 	var selectedHasUvs = false;
 
 	function update() {
 
-		var material = selected.material;
+		var material = selectedMaterial;
 		var textureWarning = false;
 
 		if ( material ) {
+
+			signals.selectObject.dispatch( null );
 
 			material.name = materialName.getValue();
 
 			if ( material instanceof materialClasses[ materialClass.getValue() ] == false ) {
 
 				material = new materialClasses[ materialClass.getValue() ]();
-				selected.material = material;
+				selectedMaterial = material;
 
 			}
 
@@ -275,6 +278,7 @@ Sidebar.Material = function ( signals ) {
 
 					material.map = mapEnabled ? materialMap.getValue() : null;
 					material.needsUpdate = true;
+					// TODO: update all buffers with this material
 					selected.geometry.buffersNeedUpdate = true;
 					selected.geometry.uvsNeedUpdate = true;
 
@@ -445,7 +449,7 @@ Sidebar.Material = function ( signals ) {
 
 		for ( var property in properties ) {
 
-			properties[ property ].setDisplay( selected.material[ property ] !== undefined ? '' : 'none' );
+			properties[ property ].setDisplay( selectedMaterial[ property ] !== undefined ? '' : 'none' );
 
 		}
 
@@ -463,16 +467,18 @@ Sidebar.Material = function ( signals ) {
 
 	// events
 
-	signals.objectSelected.add( function ( object ) {
+	signals.selectMaterial.add( function ( material ) {
 
-		if ( object && object.material ) {
+		if ( material ) {
 
-			selected = object;
-			selectedHasUvs = object.geometry.faceVertexUvs[ 0 ].length > 0;
+			// selected = object;
+			// selectedHasUvs = object.geometry.faceVertexUvs[ 0 ].length > 0;
+
+			selectedMaterial = material;
 
 			container.setDisplay( '' );
 
-			var material = object.material;
+			// var material = object.material;
 
 			materialName.setValue( material.name );
 			materialClass.setValue( getMaterialInstanceName( material ) );
@@ -509,55 +515,104 @@ Sidebar.Material = function ( signals ) {
 
 			if ( material.map !== undefined ) {
 
-				if ( selectedHasUvs ) {
+				// if ( selectedHasUvs ) {
 
-					materialMapEnabled.setValue( material.map !== null );
-					materialMap.setValue( material.map );
+					if ( material.map !== null ) {
 
-				} else {
+						materialMapEnabled.setValue( true );
+						materialMap.setValue( material.map );
 
-					console.warn( "Can't set texture, model doesn't have texture coordinates" );
+					} else {
 
-				}
+						materialMapEnabled.setValue( false );
+
+					}
+
+				// } else {
+
+				// 	console.warn( "Can't set texture, model doesn't have texture coordinates" );
+
+				// }
 
 			}
 
 			/*
 			if ( material.lightMap !== undefined ) {
 
-				materialLightMapEnabled.setValue( material.lightMap !== null );
-				materialLightMap.setValue( material.lightMap );
+				if ( material.lightMap !== null ) {
+
+					materialLightMapEnabled.setValue( true );
+					materialLightMap.setValue( material.lightMap );
+
+				} else {
+
+					materialLightMapEnabled.setValue( false );
+
+				}
 
 			}
 			*/
 
 			if ( material.bumpMap !== undefined ) {
 
-				materialBumpMapEnabled.setValue( material.bumpMap !== null );
-				materialBumpMap.setValue( material.bumpMap );
-				materialBumpScale.setValue( material.bumpScale );
+				if ( material.bumpMap !== null ) {
+
+					materialBumpMapEnabled.setValue( true );
+					materialBumpMap.setValue( material.bumpMap );
+					materialBumpScale.setValue( material.bumpScale );
+
+				} else {
+
+					materialBumpMapEnabled.setValue( false );
+					materialBumpScale.setValue( 1 );
+
+				}
 
 			}
 
 			if ( material.normalMap !== undefined ) {
 
-				materialNormalMapEnabled.setValue( material.normalMap !== null );
-				materialNormalMap.setValue( material.normalMap );
+				if ( material.normalMap !== null ) {
+
+					materialNormalMapEnabled.setValue( true );
+					materialNormalMap.setValue( material.normalMap );
+
+				} else {
+
+					materialNormalMapEnabled.setValue( false );
+
+				}
 
 			}
 
 			if ( material.specularMap !== undefined ) {
 
-				materialSpecularMapEnabled.setValue( material.specularMap !== null );
-				materialSpecularMap.setValue( material.specularMap );
+				if ( material.specularMap !== null ) {
+
+					materialSpecularMapEnabled.setValue( true );
+					materialSpecularMap.setValue( material.specularMap );
+
+				} else {
+
+					materialSpecularMapEnabled.setValue( false );
+
+				}
 
 			}
 
 			if ( material.envMap !== undefined ) {
 
-				materialEnvMapEnabled.setValue( material.envMap !== null );
-				materialEnvMap.setValue( material.envMap );
-				materialReflectivity.setValue( material.reflectivity );
+				if ( material.envMap !== null ) {
+
+					materialEnvMapEnabled.setValue( true );
+					materialEnvMap.setValue( material.envMap );
+					materialReflectivity.setValue( material.reflectivity );
+
+				} else {
+
+					materialEnvMapEnabled.setValue( false );
+
+				}
 
 			}
 
@@ -587,10 +642,12 @@ Sidebar.Material = function ( signals ) {
 
 			updateRows();
 
+			update();
+
 		} else {
 
-			selected = null;
-			selectedHasUvs = false;
+			// selected = null;
+			// selectedHasUvs = false;
 
 			container.setDisplay( 'none' );
 

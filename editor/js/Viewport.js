@@ -28,6 +28,17 @@ var Viewport = function ( signals ) {
 	//
 
 	var scene = new THREE.Scene();
+	scene.uuid = uuid();
+	scene.name = 'Scene';
+  EDITOR = {};
+  EDITOR.geometries = {}; 
+  EDITOR.materials = {}; 
+  EDITOR.textures = {}; 
+  EDITOR.objects = {};
+
+  EDITOR.objects[ scene.uuid ] = scene;
+
+  container.scene = scene;
 
 	var camera = new THREE.PerspectiveCamera( 50, container.dom.offsetWidth / container.dom.offsetHeight, 1, 5000 );
 	camera.position.set( 500, 250, 500 );
@@ -125,13 +136,13 @@ var Viewport = function ( signals ) {
 
 				}
 
-				signals.objectSelected.dispatch( selected );
+				signals.selectObject.dispatch( selected );
 
 			} else {
 
 				selected = camera;
 
-				signals.objectSelected.dispatch( selected );
+				signals.selectObject.dispatch( selected );
 
 			}
 
@@ -193,7 +204,7 @@ var Viewport = function ( signals ) {
 
 	} );
 
-	signals.rendererChanged.add( function ( object ) {
+	signals.setRenderer.add( function ( object ) {
 
 		container.dom.removeChild( renderer.domElement );
 
@@ -209,23 +220,51 @@ var Viewport = function ( signals ) {
 
 	} );
 
-	signals.sceneAdded.add( function ( object ) {
+	signals.addScene.add( function ( object ) {
 
 		scene.userData = JSON.parse( JSON.stringify( object.userData ) );
 
 		while ( object.children.length > 0 ) {
 
-			signals.objectAdded.dispatch( object.children[ 0 ] );
+			signals.addObject.dispatch( object.children[ 0 ] );
 
 		}
 
 	} );
 
-	signals.objectAdded.add( function ( object ) {
+	signals.addMaterial.add( function ( material ) {
+
+		if ( !material.uuid ) material.uuid = uuid();
+		EDITOR.materials[ material.uuid ] = material;
+		signals.sceneChanged.dispatch( scene );
+
+	} );
+
+	signals.addGeometry.add( function ( geometry ) {
+
+		if ( !geometry.uuid ) geometry.uuid = uuid();
+		EDITOR.geometries[ geometry.uuid ] = geometry;
+		signals.sceneChanged.dispatch( scene );
+
+	} );
+
+	signals.addObject.add( function ( object, parent ) {
+
+		parent = parent ? parent : scene;
 
 		// handle children
 
 		object.traverse( function ( object ) {
+
+			// Set UUIDs
+
+			if ( !object.uuid ) object.uuid = uuid();
+			EDITOR.objects[ object.uuid ] = object;
+
+			if ( object.geometry ) signals.addGeometry.dispatch( object.geometry );
+			
+			if ( object.material ) signals.addMaterial.dispatch( object.material );
+
 
 			// create helpers for invisible object types (lights, cameras, targets)
 
@@ -279,7 +318,7 @@ var Viewport = function ( signals ) {
 
 		} );
 
-		scene.add( object );
+		parent.add( object );
 
 		// TODO: Add support for hierarchies with lights
 
@@ -292,31 +331,30 @@ var Viewport = function ( signals ) {
 		updateInfo();
 
 		signals.sceneChanged.dispatch( scene );
-		signals.objectSelected.dispatch( object );
+
+		// signals.selectObject.dispatch( object );
 
 	} );
 
-	signals.objectSelected.add( function ( object ) {
+	signals.selectObject.add( function ( object ) {
 
 		selectionBox.visible = false;
 		transformControls.detach();
 
-		if ( object !== null ) {
+		if ( !object ) object = scene;
 
-			if ( object.geometry !== undefined ) {
+		if ( object.geometry !== undefined ) {
 
-				selectionBox.update( object );
-				selectionBox.visible = true;
+			selectionBox.update( object );
+			selectionBox.visible = true;
 
-			}
+		}
 
-			selected = object;
+		selected = object;
 
-			if ( selected instanceof THREE.PerspectiveCamera === false ) {
+		if ( selected instanceof THREE.PerspectiveCamera === false ) {
 
-				transformControls.attach(object);
-
-			}
+			transformControls.attach(object);
 
 		}
 
@@ -346,45 +384,48 @@ var Viewport = function ( signals ) {
 
 	} );
 
-	signals.cloneSelectedObject.add( function () {
+	signals.cloneObject.add( function ( object ) {
 
-		if ( selected === camera ) return;
+		object = object ? object : selected;
 
-		var object = selected.clone();
+		if ( object === camera ) return;
 
-		signals.objectAdded.dispatch( object );
+		var clonedObject = object.clone();
+
+		signals.addObject.dispatch( clonedObject );
 
 	} );
 
-	signals.removeSelectedObject.add( function () {
+	signals.removeObject.add( function ( object ) {
 
-		if ( selected.parent === undefined ) return;
+		object = object ? object : selected;
 
-		var name = selected.name ?  '"' + selected.name + '"': "selected object";
+		if ( object.parent === undefined ) return;
 
-		if ( confirm( 'Delete ' + name + '?' ) === false ) return;
+		var name = object.name ?  '"' + object.name + '"': "object object";
 
-		var parent = selected.parent;
+		var parent = object.parent;
 
-		if ( selected instanceof THREE.PointLight ||
-		     selected instanceof THREE.DirectionalLight ||
-		     selected instanceof THREE.SpotLight ||
-		     selected instanceof THREE.HemisphereLight ) {
+		if ( object instanceof THREE.PointLight ||
+		     object instanceof THREE.DirectionalLight ||
+		     object instanceof THREE.SpotLight ||
+		     object instanceof THREE.HemisphereLight ) {
 
-			var helper = objectsToHelpers[ selected.id ];
+			var helper = objectsToHelpers[ object.id ];
 
 			objects.splice( objects.indexOf( helper.lightSphere ), 1 );
 
 			helper.parent.remove( helper );
-			selected.parent.remove( selected );
+			object.parent.remove( object );
+			signals.objectRemoved.dispatch( object );
 
-			delete objectsToHelpers[ selected.id ];
+			delete objectsToHelpers[ object.id ];
 			delete helpersToObjects[ helper.id ];
 
-			if ( selected instanceof THREE.DirectionalLight ||
-			     selected instanceof THREE.SpotLight ) {
+			if ( object instanceof THREE.DirectionalLight ||
+			     object instanceof THREE.SpotLight ) {
 
-				selected.target.parent.remove( selected.target );
+				object.target.parent.remove( object.target );
 
 			}
 
@@ -392,26 +433,27 @@ var Viewport = function ( signals ) {
 
 		} else {
 
-			selected.traverse( function ( object ) {
+			object.traverse( function ( object ) {
 
 				var index = objects.indexOf( object );
 
 				if ( index !== -1 ) {
 
-					objects.splice( index, 1 )
+					objects.splice( index, 1 );
 
 				}
 
 			} );
 
-			selected.parent.remove( selected );
+			object.parent.remove( object );
+			signals.objectRemoved.dispatch( object );
 
 			updateInfo();
 
 		}
 
 		signals.sceneChanged.dispatch( scene );
-		signals.objectSelected.dispatch( parent );
+		signals.selectObject.dispatch( parent );
 
 	} );
 
@@ -480,6 +522,12 @@ var Viewport = function ( signals ) {
 
 	} );
 
+	signals.sceneChanged.add( function ( scene ) {
+
+		render();
+
+	} );
+
 	signals.windowResize.add( function () {
 
 		camera.aspect = container.dom.offsetWidth / container.dom.offsetHeight;
@@ -492,10 +540,10 @@ var Viewport = function ( signals ) {
 	} );
 
 	signals.playAnimations.add( function (animations) {
-		
+
 		function animate() {
 			requestAnimationFrame( animate );
-			
+
 			for (var i = 0; i < animations.length ; i++ ){
 				animations[i].update(0.016);
 			} 
@@ -507,7 +555,7 @@ var Viewport = function ( signals ) {
 		animate();
 
 	} );
-
+	
 	//
 
 	var renderer;

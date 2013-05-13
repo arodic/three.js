@@ -10,6 +10,7 @@ THREE.Object3D = function () {
 	this.id = THREE.Object3DIdCount ++;
 
 	this.name = '';
+	this.uuid = '';
 
 	this.parent = undefined;
 	this.children = [];
