@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js example</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #888;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				position: absolute;
+				padding: 10px;
+				width: 100%;
+				text-align: center;
+			}
+
+			body > io-object {
+				min-width: 20em;
+				padding: 0.3em;
+				position: absolute;
+				top: 0;
+				right: 0;
+				background: #fff;
+			}
+
+			a {
+				text-decoration: underline;
+				cursor: pointer;
+			}
+
+		</style>
+	</head>
+
+	<body>
+		<div id="info">three.js example</div>
+
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+
+		<script type="module">
+
+			import * as IO from "./js/libs/io.min.js";
+			import * as THREE from "../build/three.module.js";
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			// renderer
+
+			const renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+
+			document.body.appendChild( renderer.domElement );
+
+			// performance monitor
+
+			const stats = new Stats();
+			document.body.appendChild( stats.dom );
+
+			const io = document.createElement( 'io-object' );
+			io.value = io;
+			document.body.appendChild( io );
+
+			let example;
+			let startTime = Date.now();
+			let time = startTime;
+			let previousTime = startTime;
+
+			import( './' + new URL( window.location ).searchParams.get( 'file' ) + '.js').then( module => {
+
+				example = new module.Example( { renderer: renderer } );
+
+				io.value = example;
+				io.expanded = true;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				example.setAspect( window.innerWidth / window.innerHeight );
+
+				example.init();
+
+				example.play();
+
+				animate();
+
+			} );
+
+			function onWindowResize() {
+
+				example.setAspect( window.innerWidth / window.innerHeight )
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				time = Date.now();
+
+				example.update( time, previousTime - time, startTime - time );
+
+				previousTime = time;
+
+				if ( !example.rendered ) {
+
+					example.preRender();
+					example.render();
+					example.postRender();
+
+					stats.update();
+
+					example.rendered = true;
+
+				}
+
+			}
+
+		</script>
+	</body>
+</html>
