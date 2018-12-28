@@ -2,7 +2,7 @@
  * @author mrdoob / http://mrdoob.com/
  */
 
-THREE.OBJLoader = ( function () {
+var OBJLoader = ( function () {
 
 	// o object_name | g group_name
 	var object_pattern = /^[og]\s*(.+)?/;
@@ -795,3 +795,5 @@ THREE.OBJLoader = ( function () {
 	return OBJLoader;
 
 } )();
+
+export {OBJLoader};
